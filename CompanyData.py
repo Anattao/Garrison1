@@ -1,11 +1,12 @@
 import requests
 from bs4 import BeautifulSoup
-import xlrd
+import pandas as pd
 
-workbook = xlrd.open_workbook()
-# Ask for company name input
-print("Please type in the company name code==>")
-symbol = str(input())
+#get company input
+df = pd.read_excel('Garrison Project.xlsm','User Form')
+companydata=df['Response']
+symbol = companydata[1]
+
 
 # Generate URL and get html
 URL = "https://finance.yahoo.com/quote/%s/history?p=%s" % (symbol, symbol)
