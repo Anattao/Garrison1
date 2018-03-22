@@ -97,8 +97,8 @@ for COMP in complist:
     ratios[COMP]['EBITDA']=EBITDA(usefultext)
     ratios[COMP]['beta']=beta(usefultext)
     ratios[COMP]['cash_flow']=cash_flow(usefultext)
-    
-    
+
+
 
 
 
