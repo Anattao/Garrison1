@@ -42,7 +42,7 @@ def PEG_ratio(file):
     while not file[location + length + i].isalpha():
         i += 1
     data =file[location + length:location + length + i]
-    if data == 'N/A':
+    if data=='N/A':
         data = 0
     else:
         data = data.replace(",","")
@@ -72,7 +72,7 @@ def EBITDA(file):
     i = 0
     if file[location + length + i].isalpha():
         data = file[location + length:location + length + 3]
-        if data == 'N/A':
+        if data=='N/A':
             data = 0
         else:
             data = data.replace(",","")[:-1]
@@ -93,7 +93,7 @@ def beta(file):
     location = file.find("Beta")
     length = len("Beta ")
     data=file[location + length:location + length + 4]
-    if data == 'N/A':
+    if data=='N/A':
         data = 0
     else:
         data = data.replace(",","")
@@ -108,7 +108,7 @@ def cash_flow(file):
     while not file[location + length + i].isalpha():
         i += 1
     data = file[location + length:location + length + i + 1]
-    if data == 'N/A':
+    if data=='N/A':
         data = 0
     else:
         data = data.replace(",","")[:-1]

@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
 from DataFetchFunctions import *
-
+#----------------------------------------------------------------------------
 #get user input
 uForm = pd.read_excel('Garrison Project.xlsm','User Form')
 iForm = pd.read_excel('Garrison Project.xlsm','Companies by Industry')
@@ -13,8 +13,8 @@ sector = userData[2]
 industry = userData[3]
 industryComp = iForm[industry].dropna(axis=0,how='all')
 industryComp = industryComp.values
-
-# Generate URL and get html
+#----------------------------------------------------------------------------
+# Generate URL and get html for user input company
 URL = "https://finance.yahoo.com/quote/%s/history?p=%s" % (symbol, symbol)
 print("getting data from " + URL)
 web = requests.get(URL)
@@ -24,7 +24,7 @@ htmlfile = BeautifulSoup(web.text, 'html.parser')
 for script in htmlfile(["script", "style"]):
     script.extract()
 
-# gather data into a list and then extract the useful portion
+# gather stock data
 alldata = []
 for string in htmlfile.stripped_strings:
     alldata.append(string)
@@ -45,6 +45,27 @@ for datapoint in usefuldata:
     datapoint = datapoint.replace(",", "")
     Dataperday.append(datapoint)
     i += 1
+print(Datalist)
+#----------------------------------------------------------------------------
+# get ratio data for user input company
+URL = "https://finance.yahoo.com/quote/%s/key-statistics?p=%s" % (symbol, symbol)
+print("getting data from " + URL)
+web = requests.get(URL)
+htmlfile = BeautifulSoup(web.text, 'html.parser')
+text = htmlfile.get_text()
+start = text.find("Currency in USDValuation Measures")
+end = text.find("Last Split Date")
+usefultext = text[start + 15:end + 29]  # the string variable that contains all the statistics values
+ucompany = [symbol,0,0,0,0,0,0,0]
+ucompany[1]=market_cap(usefultext)
+ucompany[2]=trailing_PE(usefultext)
+ucompany[3]=PEG_ratio(usefultext)
+ucompany[4]=Debts_Equity_ratio(usefultext)
+ucompany[5]=EBITDA(usefultext)
+ucompany[6]=beta(usefultext)
+ucompany[7]=cash_flow(usefultext)
+print(ucompany)
+#----------------------------------------------------------------------------
 # Writing datapoints into excel file
 #outfile = symbol + '.csv'
 #data = 'Date, Open, High, Low, Close, Adj Close, Volume\n'
@@ -58,11 +79,11 @@ for datapoint in usefuldata:
 
 #print("Finished")
 
-
-# company list input
+#----------------------------------------------------------------------------
+# get weighted industry average for selected industry
 complist = industryComp
 ratios = {}
-ratiosum=[0,0,0,0,0,0,0]
+ratiosum=[industry,0,0,0,0,0,0,0]
 for COMP in complist:
     # Generate URL and get html
     URL = "https://finance.yahoo.com/quote/%s/key-statistics?p=%s" % (COMP, COMP)
@@ -75,7 +96,6 @@ for COMP in complist:
     start = text.find("Currency in USDValuation Measures")
     end = text.find("Last Split Date")
     usefultext = text[start + 15:end + 29]  # the string variable that contains all the statistics values
-
     # start to extract the value of interest
     ratios[COMP] = {}
     ratios[COMP]['Market_Cap'] = market_cap(usefultext)
@@ -86,36 +106,48 @@ for COMP in complist:
     ratios[COMP]['beta'] = beta(usefultext)
     ratios[COMP]['cash_flow'] = cash_flow(usefultext)
     # generate sum of ratio data for each ratio
-    ratiosum[0]+=market_cap(usefultext)
-    ratiosum[1]+=trailing_PE(usefultext)
-    ratiosum[2]+=PEG_ratio(usefultext)
-    ratiosum[3]+=Debts_Equity_ratio(usefultext)
-    ratiosum[4]+=EBITDA(usefultext)
-    ratiosum[5]+=beta(usefultext)
-    ratiosum[6]+=cash_flow(usefultext)
+    ratiosum[1]+=market_cap(usefultext)
+    ratiosum[2]+=trailing_PE(usefultext)
+    ratiosum[3]+=PEG_ratio(usefultext)
+    ratiosum[4]+=Debts_Equity_ratio(usefultext)
+    ratiosum[5]+=EBITDA(usefultext)
+    ratiosum[6]+=beta(usefultext)
+    ratiosum[7]+=cash_flow(usefultext)
 print(ratiosum)
 # gets weighted averages for all ratios and puts it in a list
-weightedvalues=[0,0,0,0,0,0,0]
+weightedvalues=[industry,0,0,0,0,0,0,0]
 for keys,values in ratios.items():
     for keys1,values1 in values.items():
         if keys1 == 'Market_Cap':
-            weightedvalues[0]+=(values1/ratiosum[0])*values1
+            weightedvalues[1]=ratiosum[1]/len(complist)
+            marketcapWeight=(values1/ratiosum[1])
         if keys1 == 'Trailing PE':
-            weightedvalues[1]+=(values1/ratiosum[1])*values1
+            weightedvalues[2]+=marketcapWeight*values1
         if keys1 == 'PEG_ratio':
-            weightedvalues[2]+=(values1/ratiosum[2])*values1
+            weightedvalues[3]+=marketcapWeight*values1
         if keys1 == 'Debts_Equity_ratio':
-            weightedvalues[3]+=(values1/ratiosum[3])*values1
+            weightedvalues[4]+=marketcapWeight*values1
         if keys1 == 'EBITDA':
-            weightedvalues[4]+=(values1/ratiosum[4])*values1
+            weightedvalues[5]+=marketcapWeight*values1
         if keys1 == 'beta':
-            weightedvalues[5]+=(values1 / ratiosum[5]) * values1
+            weightedvalues[6]+=marketcapWeight*values1
         if keys1 == 'cash_flow':
-            weightedvalues[6]+=(values1/ratiosum[6])*values1
+            weightedvalues[7]+=marketcapWeight*values1
 print(weightedvalues)
-
-
-
+#----------------------------------------------------------------------------
+labelsStockData=['Date', 'Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']
+labelsRatios=['Ratio_Type','Market_Cap','Trailing PE','PEG_ratio','Debts_Equity_ratio','EBITDA','beta','cash_flow']
+finalStockData= [labelsStockData]+Datalist
+finalratios = [labelsRatios,ucompany,weightedvalues]
+print(finalStockData)
+df1 = pd.DataFrame(finalStockData[1:],columns=finalStockData[0])
+df2 = pd.DataFrame(finalratios[1:], columns= finalratios[0])
+print(df1)
+print(df2)
+writer = pd.ExcelWriter(symbol+'.xlsx', engine='xlsxwriter')   # Creating Excel Writer Object from Pandas
+workbook=writer.book
+df1.to_excel(writer,sheet_name=symbol,startrow=0 , startcol=0)
+df2.to_excel(writer,sheet_name=symbol,startrow=0, startcol=10)
 
 
 
