@@ -14,8 +14,7 @@ industryComp = industryComp.values
 
 uData = iexfinance.Stock(symbol)
 allUserData=uData.get_key_stats()
-allUserData2=uData.get_financials()[3]
-print(allUserData2)
+allUserData2=uData.get_financials()[-1]
 userCompanyData={}
 userCompanyData[symbol]={}
 userCompanyData[symbol]['Market Cap']=allUserData['marketcap']
@@ -34,11 +33,12 @@ complist = industryComp
 ratios = {}
 allData = {}
 allData2 = {}
+totalMarketCap=0
 for COMP in complist:
     cData=iexfinance.Stock(COMP)
     ratios[COMP] = {}
     allData[COMP] = cData.get_key_stats()
-    allData2[COMP] = cData.get_financials()[3]
+    allData2[COMP] = cData.get_financials()[-1]
     ratios[COMP]['Market Cap']=allData[COMP]['marketcap']
     ratios[COMP]['Beta'] = allData[COMP]['beta']
     ratios[COMP]['Debt Equity Ratio'] = allData2[COMP]['totalLiabilities']/allData2[COMP]['shareholderEquity']
@@ -48,6 +48,7 @@ for COMP in complist:
     ratios[COMP]['Short Ratio'] = allData[COMP]['shortRatio']
     ratios[COMP]['50 Day Moving Average'] = allData[COMP]['day50MovingAvg']
     ratios[COMP]['200 Day Moving Average'] = allData[COMP]['day200MovingAvg']
+    totalMarketCap+=allData[COMP]['marketcap']
 print(ratios)
 
 start = datetime.date.today()-datetime.timedelta(100)
@@ -55,4 +56,33 @@ end = datetime.date.today()
 
 stockData = iexfinance.get_historical_data(symbol,start,end)
 print(stockData)
+
+weightIndAvg={}
+weightIndAvg[industry]={'Market Cap': 0, 'Beta': 0, 'Debt Equity Ratio': 0, 'PE Ratio': 0, 'Price to Sales': 0, 'Price to Book': 0, 'Short Ratio': 0, '50 Day Moving Average': 0, '200 Day Moving Average': 0}
+for keys,values in ratios.items():
+    for keys1,values1 in values.items():
+        if keys1 == 'Market Cap':
+            weight = values1/totalMarketCap
+            weightIndAvg[industry]['Market Cap']+=weight*values1
+        if keys1 == 'Beta':
+            weightIndAvg[industry]['Beta']+=weight*values1
+        if keys1 == 'Debt Equity Ratio':
+            weightIndAvg[industry]['Debt Equity Ratio']+=weight*values1
+        if keys1 == 'PE Ratio':
+            weightIndAvg[industry]['PE Ratio']+=weight*values1
+        if keys1 == 'Price to Sales':
+            weightIndAvg[industry]['Price to Sales']+=weight*values1
+        if keys1 == 'Price to Book':
+            weightIndAvg[industry]['Price to Book']+= weight*values1
+        if keys1 == 'Short Ratio':
+            weightIndAvg[industry]['Short Ratio']+=weight*values1
+        if keys1 == '50 Day Moving Average':
+            weightIndAvg[industry]['50 Day Moving Average']+=weight*values1
+        if keys1 == '200 Day Moving Average':
+            weightIndAvg[industry]['200 Day Moving Average']+=weight*values1
+
+print(weightIndAvg)
+
+
+
 
