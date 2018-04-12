@@ -61,17 +61,35 @@ for item in ratios.keys():
     sumMC+=ratios[item]['Market Cap']
 
 # function to calculate weighted average
+#def Weighted_Average(term):
+#    weighted_avg=0
+#    for comp in ratios.keys():
+#        weighted_avg+=ratios[comp][term]*ratios[comp]['Market Cap']/sumMC
+#    return weighted_avg
+
 def Weighted_Average(term):
     weighted_avg=0
+    realsumMC = sumMC
     for comp in ratios.keys():
+        if ratios[comp][term] is None:
+            ratios[comp][term] = 0
+            realsumMC = realsumMC - ratios[comp]['Market Cap']
         weighted_avg+=ratios[comp][term]*ratios[comp]['Market Cap']/sumMC
+    weighted_avg=weighted_avg*sumMC/realsumMC
     return weighted_avg
 
 # standard deviation list function
+#def Std_Dev_List(term):
+#    stdDev=[]
+#    for comp in ratios.keys():
+#        stdDev.append(ratios[comp][term])
+#    return stdDev
+
 def Std_Dev_List(term):
     stdDev=[]
     for comp in ratios.keys():
-        stdDev.append(ratios[comp][term])
+        if ratios[comp][term]!=0:
+            stdDev.append(ratios[comp][term])
     return stdDev
 
 # compile data tile and value to two lists
